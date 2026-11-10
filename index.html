@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scribbly Notes - Project 5</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts for Handwriting styles -->
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Indie+Flower&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+  <style>
+    /* Handwriting Font Classes */
+    .font-caveat { font-family: 'Caveat', cursive; }
+    .font-indie { font-family: 'Indie Flower', cursive; }
+    .font-shadows { font-family: 'Shadows Into Light', cursive; }
+
+    /* Notebook Page Styling */
+    .notebook-page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 25mm 20mm;
+      background-color: #fdfbf7;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+      margin: 0 auto 20mm auto;
+      box-sizing: border-box;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Paper Background Variations */
+    .paper-lined {
+      background-image: linear-gradient(#e5e7eb 1px, transparent 1px);
+      background-size: 100% 32px;
+    }
+    .paper-grid {
+      background-image: linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(90deg, #e5e7eb 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+    .paper-plain {
+      background-image: none;
+    }
+
+    @media print {
+      body { background: white !important; }
+      header, aside, .no-print { display: none !important; }
+      .notebook-page { box-shadow: none !important; margin: 0 !important; width: 100% !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-amber-700 text-white p-4 shadow-md flex justify-between items-center no-print">
+    <div class="flex items-center gap-3">
+      <h1 class="text-xl font-bold">Scribbly Notes</h1>
+      <span class="text-xs bg-amber-900 border border-amber-600 px-2.5 py-1 rounded-full text-amber-200">Project 5</span>
+    </div>
+    <div class="text-xs bg-amber-800 px-3 py-1.5 rounded text-amber-100 italic">
+      Rule: For your own notes only. Never submit as schoolwork.
+    </div>
+  </header>
+
+  <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+    
+    <!-- Sidebar Controls -->
+    <aside class="w-full lg:w-[400px] bg-white p-6 shadow-lg overflow-y-auto max-h-[calc(100vh-64px)] flex flex-col gap-5 no-print">
+      
+      <div>
+        <label class="block text-sm font-bold text-slate-700 mb-2">1. Type Your Notes</label>
+        <textarea id="noteInput" rows="8" class="w-full border p-3 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Type or paste your notes here...">Ohm's law: V = IR!
+Current rises proportionally with voltage in an ideal ohmic conductor.
+Remember to review graphs on page 14 before the exam test tomorrow.</textarea>
+      </div>
+
+      <!-- Styling Controls -->
+      <div class="grid grid-cols-2 gap-3 border-t pt-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Handwriting Style</label>
+          <select id="fontSelect" class="w-full border p-2 rounded text-sm bg-slate-50">
+            <option value="font-caveat">Caveat (Neat Cursive)</option>
+            <option value="font-indie">Indie Flower (Casual)</option>
+            <option value="font-shadows">Shadows Into Light (Marker)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Ink Color</label>
+          <select id="colorSelect" class="w-full border p-2 rounded text-sm bg-slate-50">
+            <option value="text-blue-900">Classic Blue</option>
+            <option value="text-slate-900">Dark Black</option>
+            <option value="text-red-900">Red Pen</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Paper Style[cite: 8]</label>
+        <select id="paperSelect" class="w-full border p-2 rounded text-sm bg-slate-50">
+          <option value="paper-lined">Lined Notebook</option>
+          <option value="paper-grid">Grid / Squared</option>
+          <option value="paper-plain">Plain Paper</option>
+        </select>
+      </div>
+
+      <!-- Export Actions -->
+      <div class="border-t pt-4 flex flex-col gap-2">
+        <button id="printBtn" class="w-full bg-amber-700 hover:bg-amber-800 text-white font-semibold py-2.5 px-4 rounded-lg shadow transition text-sm">
+          Print / Save as PDF[cite: 8]
+        </button>
+      </div>
+
+    </aside>
+
+    <!-- Workspace Preview -->
+    <main class="flex-1 bg-slate-200 p-8 overflow-y-auto flex flex-col items-center gap-6">
+      <div class="no-print text-xs text-slate-500 mb-[-10px]">
+        Live Page Preview (Long notes automatically flow onto new pages)[cite: 8]
+      </div>
+      
+      <!-- Container holding multi-page notebook sheets -->
+      <div id="pagesContainer" class="flex flex-col gap-8 w-full items-center">
+        <!-- Dynamic notebook pages render here -->
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    const noteInput = document.getElementById('noteInput');
+    const fontSelect = document.getElementById('fontSelect');
+    const colorSelect = document.getElementById('colorSelect');
+    const paperSelect = document.getElementById('paperSelect');
+    const pagesContainer = document.getElementById('pagesContainer');
+    const printBtn = document.getElementById('printBtn');
+
+    function renderNotebook() {
+      const text = noteInput.value;
+      const fontClass = fontSelect.value;
+      const colorClass = colorSelect.value;
+      const paperClass = paperSelect.value;
+
+      pagesContainer.innerHTML = '';
+
+      // Split text into lines to simulate multi-page notebook flow without cutting lines
+      const rawLines = text.split('\n');
+      const linesPerPage = 22; // Lines per A4 page chunk
+      const pageChunks = [];
+
+      for (let i = 0; i < rawLines.length; i += linesPerPage) {
+        pageChunks.push(rawLines.slice(i, i + linesPerPage));
+      }
+
+      if (pageChunks.length === 0) {
+        pageChunks.push(['']);
+      }
+
+      pageChunks.forEach((chunk, pageIndex) => {
+        const pageDiv = document.createElement('div');
+        pageDiv.className = `notebook-page ${paperClass} flex flex-col justify-between`;
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = `flex flex-col gap-3 ${fontClass} ${colorClass} text-2xl leading-[32px]`;
+
+        chunk.forEach(lineText => {
+          const lineP = document.createElement('p');
+          // Add subtle natural rotation/margin variation so lines don't look machine-made[cite: 8]
+          const randomRotation = (Math.random() * 0.4 - 0.2).toFixed(2);
+          const randomIndent = Math.floor(Math.random() * 4);
+          lineP.style.transform = `rotate(${randomRotation}deg)`;
+          lineP.style.marginLeft = `${randomIndent}px`;
+          lineP.textContent = lineText || '\u00A0';
+          contentDiv.appendChild(lineP);
+        });
+
+        pageDiv.appendChild(contentDiv);
+
+        // Page Number Footer
+        const footer = document.createElement('div');
+        footer.className = 'text-center text-xs text-slate-400 font-sans mt-auto pt-4';
+        footer.textContent = `- Page ${pageIndex + 1} of ${pageChunks.length} -`;
+        pageDiv.appendChild(footer);
+
+        pagesContainer.appendChild(pageDiv);
+      });
+    }
+
+    // Event listeners for live updates
+    [noteInput, fontSelect, colorSelect, paperSelect].forEach(element => {
+      element.addEventListener('input', renderNotebook);
+      element.addEventListener('change', renderNotebook);
+    });
+
+    printBtn.addEventListener('click', () => {
+      window.print();[cite, 8]
+    });
+
+    // Initial render call
+    renderNotebook();
+  </script>
+</body>
+</html>
